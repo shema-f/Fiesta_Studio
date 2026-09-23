@@ -10,7 +10,19 @@ export type InstrumentType =
   | 'synth'
   | 'drums'
   | 'pluck'
-  | 'pad';
+  | 'pad'
+  | 'lounge_lizard'
+  | 'inanga'
+  | 'kalimba'
+  | 'balafon';
+
+export type DawTheme =
+  | 'fl-classic'
+  | 'fl-dark'
+  | 'fruit-punch'
+  | 'kigali-gold'
+  | 'cyber-neon'
+  | 'high-contrast';
 
 export type EffectType =
   | 'eq'
@@ -49,6 +61,7 @@ export interface DrumChannel {
   pitch: number; // -12 to 12 semitones
   mute: boolean;
   solo: boolean;
+  mixerTrack?: number; // 1, 2, 3... or 0 for master
   customSampleUrl?: string;
   audioBuffer?: AudioBuffer;
 }

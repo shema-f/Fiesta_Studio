@@ -30,6 +30,8 @@ import { ProjectState } from '../engine/projectStore';
 import { audioEngine } from '../audio/audioEngine';
 import { ViewMode } from '../types/daw';
 
+import { AppleLogo } from './AppleLogo';
+
 interface TransportBarProps {
   project: ProjectState;
   onUpdateProject: (updater: (prev: ProjectState) => ProjectState) => void;
@@ -41,6 +43,7 @@ interface TransportBarProps {
   onSave: () => void;
   onOpenExport: () => void;
   onOpenCommandPalette: () => void;
+  onOpenSplash?: () => void;
 }
 
 export const TransportBar: React.FC<TransportBarProps> = ({
@@ -54,6 +57,7 @@ export const TransportBar: React.FC<TransportBarProps> = ({
   onSave,
   onOpenExport,
   onOpenCommandPalette,
+  onOpenSplash,
 }) => {
   const [isEditingBpm, setIsEditingBpm] = useState(false);
   const [bpmInput, setBpmInput] = useState(project.bpm.toString());
@@ -156,18 +160,17 @@ export const TransportBar: React.FC<TransportBarProps> = ({
     <header className="h-14 bg-[#0d1015] border-b border-[#1f2633] px-3 flex items-center justify-between select-none z-30 shrink-0">
       {/* LEFT: Brand Logo & Project Title */}
       <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2 group cursor-pointer" onClick={() => setView('arrangement')}>
-          {/* Fruit Brand Badge */}
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ff3b69] via-[#ff6b4a] to-[#00f0a8] p-[1.5px] shadow-sm flex items-center justify-center">
-            <div className="w-full h-full bg-[#0d1015] rounded-[7px] flex items-center justify-center relative overflow-hidden">
-              <span className="text-base font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#ff3b69] to-[#00f0a8]">
-                FI
-              </span>
-              <div className="absolute top-0 right-0 w-2 h-2 bg-[#00f0a8] rounded-full blur-[2px] opacity-75"></div>
-            </div>
+        <div
+          className="flex items-center space-x-2 group cursor-pointer"
+          onClick={() => (onOpenSplash ? onOpenSplash() : setView('arrangement'))}
+          title="Click to open FIesta Studio / Ferrivox Info & Splash"
+        >
+          {/* Fruit / Apple Brand Badge */}
+          <div className="w-8 h-8 rounded-lg bg-[#141822] border border-[#2b3548] p-0.5 shadow-sm flex items-center justify-center hover:border-[#00f0a8] transition-colors">
+            <AppleLogo size={24} variant="neon" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-black tracking-wider text-white flex items-center gap-1 font-mono-daw">
+            <span className="text-xs font-black tracking-wider text-white flex items-center gap-1 font-mono-daw group-hover:text-[#00f0a8] transition-colors">
               FIesta <span className="text-[#00f0a8] font-bold">STUDIO</span>
               <span className="text-[9px] bg-[#1a2230] text-[#00f0a8] px-1 py-0.2 rounded border border-[#26354a]">
                 PRO

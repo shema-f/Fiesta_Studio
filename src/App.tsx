@@ -35,12 +35,26 @@ import { SampleHubView } from './samples/SampleHubView';
 import { AIAssistant } from './components/AIAssistant';
 import { ExportModal } from './components/ExportModal';
 import { CommandPalette } from './components/CommandPalette';
+import { AppleLogo } from './components/AppleLogo';
+import { AppleLoadingSplash } from './components/AppleLoadingSplash';
+import { DawTheme } from './types/daw';
 
 export function App() {
   const [project, setProject] = useState<ProjectState>(getInitialProjectState);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSplashOpen, setIsSplashOpen] = useState(true);
+  const [currentTheme, setCurrentTheme] = useState<DawTheme>(() => {
+    return (localStorage.getItem('fiesta_theme') as DawTheme) || 'fl-classic';
+  });
+
+  const handleSelectTheme = (thm: DawTheme) => {
+    setCurrentTheme(thm);
+    try {
+      localStorage.setItem('fiesta_theme', thm);
+    } catch {}
+  };
 
   // Keep a ref of project state for audio scheduler callbacks
   const projectRef = useRef(project);
@@ -176,8 +190,16 @@ export function App() {
         const patternStep = step % p.activePatternStepCount;
         for (const channel of p.drumChannels) {
           if (!channel.mute && channel.steps[patternStep]) {
-            const vel = channel.velocities[patternStep] ?? 0.85;
-            audioEngine.triggerDrum(channel.type, vel, time, 'bus_drums', channel.pitch);
+            const vel = (channel.velocities[patternStep] ?? 0.85) * (channel.volume ?? 1.0);
+            audioEngine.triggerDrum(
+              channel.type,
+              vel,
+              time,
+              'bus_drums',
+              channel.pitch,
+              channel.audioBuffer,
+              channel.pan ?? 0
+            );
           }
         }
       }
@@ -355,10 +377,16 @@ export function App() {
         onSave={handleSave}
         onOpenExport={() => setIsExportOpen(true)}
         onOpenCommandPalette={() => setIsPaletteOpen(true)}
+        onOpenSplash={() => setIsSplashOpen(true)}
       />
 
       {/* 2. MAIN WORKSPACE VIEW (Timeline, Sequencer, Piano Roll, Mixer, Instruments, Effects, Samples, AI) */}
       <main className="flex-1 flex overflow-hidden relative">
+        {/* Fruity Loops Style Background Apple Silhouette Watermark */}
+        <div className="absolute right-4 bottom-4 pointer-events-none opacity-[0.04] text-white select-none z-0">
+          <AppleLogo size={420} variant="watermark" />
+        </div>
+
         {project.viewMode === 'arrangement' && (
           <ArrangementView
             project={project}
@@ -372,6 +400,11 @@ export function App() {
           <ChannelRack
             project={project}
             onUpdateProject={updateProjectWithHistory}
+            currentTheme={currentTheme}
+            onSelectTheme={handleSelectTheme}
+            onOpenPianoRollForChannel={() => {
+              updateProjectQuiet((p) => ({ ...p, viewMode: 'pianoRoll' }));
+            }}
           />
         )}
 
@@ -545,6 +578,13 @@ export function App() {
         onStop={handleStop}
         onSave={handleSave}
         onOpenExport={() => setIsExportOpen(true)}
+      />
+
+      {/* Apple Loading & Startup Splash Screen */}
+      <AppleLoadingSplash
+        isOpen={isSplashOpen}
+        onClose={() => setIsSplashOpen(false)}
+        isInitialLoad={true}
       />
     </div>
   );

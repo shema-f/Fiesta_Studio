@@ -334,10 +334,19 @@ export class AudioEngine {
     velocity: number = 0.9,
     time?: number,
     busId: string = 'bus_drums',
-    pitchOffset: number = 0
+    pitchOffset: number = 0,
+    audioBuffer?: AudioBuffer,
+    pan: number = 0
   ): void {
     if (!this.ctx) return;
     const playTime = time ?? this.ctx.currentTime;
+
+    // Direct playback for custom imported or online samples
+    if (audioBuffer) {
+      this.playAudioBuffer(audioBuffer, playTime, busId, velocity, pan);
+      return;
+    }
+
     const destination = this.getBus(busId)?.gain || this.masterGain;
     if (!destination) return;
 
@@ -602,6 +611,210 @@ export class AudioEngine {
 
         osc.start(playTime);
         osc.stop(playTime + 0.9);
+        break;
+      }
+
+      case 'lounge_lizard':
+      case 'epiano':
+      case 'rhodes': {
+        // Lizard Lounge Electric Piano Tine & Bark
+        const noteFreq = 220 * basePitchRatio; // A3 base
+        const tine = this.ctx.createOscillator();
+        const bell = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const tremolo = this.ctx.createOscillator();
+        const tremoloGain = this.ctx.createGain();
+
+        tine.type = 'sine';
+        tine.frequency.setValueAtTime(noteFreq, playTime);
+
+        // Inharmonic bell overtone
+        bell.type = 'sine';
+        bell.frequency.setValueAtTime(noteFreq * 3.96, playTime);
+
+        // Tremolo LFO
+        tremolo.frequency.setValueAtTime(4.5, playTime);
+        tremoloGain.gain.setValueAtTime(0.2, playTime);
+        tremolo.connect(tremoloGain.gain);
+
+        gain.gain.setValueAtTime(0.001, playTime);
+        gain.gain.linearRampToValueAtTime(0.85 * velocity, playTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.3 * velocity, playTime + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.8);
+
+        tine.connect(gain);
+        bell.connect(gain);
+        gain.connect(destination);
+
+        tine.start(playTime);
+        bell.start(playTime);
+        tremolo.start(playTime);
+        tine.stop(playTime + 0.85);
+        bell.stop(playTime + 0.85);
+        tremolo.stop(playTime + 0.85);
+        break;
+      }
+
+      case 'african_inanga':
+      case 'inanga': {
+        // Authentic Rwandan Inanga Zither pluck
+        const root = 196 * basePitchRatio; // G3
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(root, playTime);
+
+        osc2.type = 'sawtooth';
+        osc2.frequency.setValueAtTime(root * 2.01, playTime);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400 * basePitchRatio, playTime);
+        filter.Q.setValueAtTime(4.0, playTime);
+
+        gain.gain.setValueAtTime(0.001, playTime);
+        gain.gain.linearRampToValueAtTime(0.9 * velocity, playTime + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.6);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gain);
+        gain.connect(destination);
+
+        osc1.start(playTime);
+        osc2.start(playTime);
+        osc1.stop(playTime + 0.65);
+        osc2.stop(playTime + 0.65);
+        break;
+      }
+
+      case 'african_djembe':
+      case 'djembe': {
+        // Resonant African Djembe with deep bass and skin slap
+        const osc = this.ctx.createOscillator();
+        const slapNoise = this.ctx.createBufferSource();
+        const slapFilter = this.ctx.createBiquadFilter();
+        const slapGain = this.ctx.createGain();
+        const gain = this.ctx.createGain();
+
+        // Low body resonance
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220 * basePitchRatio, playTime);
+        osc.frequency.exponentialRampToValueAtTime(65 * basePitchRatio, playTime + 0.09);
+
+        gain.gain.setValueAtTime(1.0 * velocity, playTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.38);
+
+        // High skin slap
+        slapNoise.buffer = this.createNoiseBuffer(0.08);
+        slapFilter.type = 'bandpass';
+        slapFilter.frequency.setValueAtTime(2200 * basePitchRatio, playTime);
+        slapFilter.Q.setValueAtTime(3.0, playTime);
+        slapGain.gain.setValueAtTime(0.7 * velocity, playTime);
+        slapGain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.06);
+
+        osc.connect(gain);
+        gain.connect(destination);
+
+        slapNoise.connect(slapFilter);
+        slapFilter.connect(slapGain);
+        slapGain.connect(destination);
+
+        osc.start(playTime);
+        slapNoise.start(playTime);
+        osc.stop(playTime + 0.4);
+        slapNoise.stop(playTime + 0.08);
+        break;
+      }
+
+      case 'african_talkingdrum':
+      case 'talkingdrum': {
+        // West African Talking Drum with dynamic pitch squeeze
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sine';
+        const startPitch = 120 * basePitchRatio;
+        const peakPitch = 280 * basePitchRatio;
+        osc.frequency.setValueAtTime(startPitch, playTime);
+        osc.frequency.exponentialRampToValueAtTime(peakPitch, playTime + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(startPitch * 0.9, playTime + 0.28);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(900 * basePitchRatio, playTime);
+        filter.Q.setValueAtTime(4.0, playTime);
+
+        gain.gain.setValueAtTime(0.95 * velocity, playTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.32);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(destination);
+
+        osc.start(playTime);
+        osc.stop(playTime + 0.35);
+        break;
+      }
+
+      case 'african_kalimba':
+      case 'kalimba': {
+        // African Kalimba / Mbira metal tines
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        const baseHz = 440 * basePitchRatio;
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(baseHz, playTime);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(baseHz * 2.98, playTime); // Inharmonic metallic chime
+
+        gain.gain.setValueAtTime(0.001, playTime);
+        gain.gain.linearRampToValueAtTime(0.8 * velocity, playTime + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.5);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(destination);
+
+        osc1.start(playTime);
+        osc2.start(playTime);
+        osc1.stop(playTime + 0.55);
+        osc2.stop(playTime + 0.55);
+        break;
+      }
+
+      case 'african_balafon':
+      case 'balafon': {
+        // African Balafon wooden bar strike with gourd buzz
+        const osc = this.ctx.createOscillator();
+        const buzz = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        const baseHz = 261.63 * basePitchRatio; // C4
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(baseHz, playTime);
+
+        // Gourd membrane buzz
+        buzz.type = 'sawtooth';
+        buzz.frequency.setValueAtTime(baseHz * 3.02, playTime);
+
+        gain.gain.setValueAtTime(0.001, playTime);
+        gain.gain.linearRampToValueAtTime(0.85 * velocity, playTime + 0.004);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.35);
+
+        osc.connect(gain);
+        buzz.connect(gain);
+        gain.connect(destination);
+
+        osc.start(playTime);
+        buzz.start(playTime);
+        osc.stop(playTime + 0.38);
+        buzz.stop(playTime + 0.38);
         break;
       }
 
@@ -918,6 +1131,180 @@ export class AudioEngine {
         };
       }
 
+      case 'lounge_lizard': {
+        // "Lizard Lounge" Electric Piano - Physical Modeling / FM Rhodes
+        const tine = this.ctx.createOscillator();
+        const bell = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const shaper = this.ctx.createWaveShaper();
+        shaper.curve = makeDistortionCurve(6) as any;
+
+        // Tremolo LFO
+        const tremolo = this.ctx.createOscillator();
+        const tremoloGain = this.ctx.createGain();
+        tremolo.type = 'sine';
+        tremolo.frequency.setValueAtTime(4.8, playTime);
+        tremoloGain.gain.setValueAtTime(0.25, playTime);
+        tremolo.connect(tremoloGain);
+
+        tine.type = 'sine';
+        tine.frequency.setValueAtTime(freq, playTime);
+
+        // Inharmonic bell overtone
+        bell.type = 'sine';
+        bell.frequency.setValueAtTime(freq * 3.98, playTime);
+
+        const bellGain = this.ctx.createGain();
+        bellGain.gain.setValueAtTime(0.35 * velocity, playTime);
+        bellGain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.25);
+        bell.connect(bellGain);
+
+        gain.gain.setValueAtTime(0.001, playTime);
+        gain.gain.linearRampToValueAtTime(0.85 * velocity, playTime + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.45 * velocity, playTime + 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + durationSec + 0.35);
+
+        tine.connect(gain);
+        bellGain.connect(gain);
+        gain.connect(shaper);
+        shaper.connect(destination);
+
+        tine.start(playTime);
+        bell.start(playTime);
+        tremolo.start(playTime);
+
+        const stopTime = playTime + durationSec + 0.4;
+        tine.stop(stopTime);
+        bell.stop(stopTime);
+        tremolo.stop(stopTime);
+
+        return {
+          stop: () => {
+            try {
+              gain.gain.cancelScheduledValues(this.ctx!.currentTime);
+              gain.gain.linearRampToValueAtTime(0.001, this.ctx!.currentTime + 0.06);
+            } catch {}
+          },
+        };
+      }
+
+      case 'inanga': {
+        // Authentic Rwandan Inanga Zither
+        const fundamental = this.ctx.createOscillator();
+        const harmonic = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        fundamental.type = 'triangle';
+        fundamental.frequency.setValueAtTime(freq, playTime);
+
+        harmonic.type = 'sawtooth';
+        harmonic.frequency.setValueAtTime(freq * 2.01, playTime);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(freq * 3.2, playTime);
+        filter.Q.setValueAtTime(4.5, playTime);
+
+        gain.gain.setValueAtTime(0.001, playTime);
+        gain.gain.linearRampToValueAtTime(0.9 * velocity, playTime + 0.004);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + Math.min(1.2, durationSec + 0.2));
+
+        fundamental.connect(filter);
+        harmonic.connect(filter);
+        filter.connect(gain);
+        gain.connect(destination);
+
+        fundamental.start(playTime);
+        harmonic.start(playTime);
+
+        const stopTime = playTime + Math.min(1.3, durationSec + 0.25);
+        fundamental.stop(stopTime);
+        harmonic.stop(stopTime);
+
+        return {
+          stop: () => {
+            try {
+              gain.gain.cancelScheduledValues(this.ctx!.currentTime);
+              gain.gain.linearRampToValueAtTime(0.001, this.ctx!.currentTime + 0.05);
+            } catch {}
+          },
+        };
+      }
+
+      case 'kalimba': {
+        // African Kalimba / Mbira Thumb Piano
+        const tine = this.ctx.createOscillator();
+        const chime = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        tine.type = 'sine';
+        tine.frequency.setValueAtTime(freq, playTime);
+
+        chime.type = 'triangle';
+        chime.frequency.setValueAtTime(freq * 2.97, playTime);
+
+        gain.gain.setValueAtTime(0.001, playTime);
+        gain.gain.linearRampToValueAtTime(0.85 * velocity, playTime + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + durationSec + 0.3);
+
+        tine.connect(gain);
+        chime.connect(gain);
+        gain.connect(destination);
+
+        tine.start(playTime);
+        chime.start(playTime);
+
+        const stopTime = playTime + durationSec + 0.35;
+        tine.stop(stopTime);
+        chime.stop(stopTime);
+
+        return {
+          stop: () => {
+            try {
+              gain.gain.cancelScheduledValues(this.ctx!.currentTime);
+              gain.gain.linearRampToValueAtTime(0.001, this.ctx!.currentTime + 0.04);
+            } catch {}
+          },
+        };
+      }
+
+      case 'balafon': {
+        // African Balafon Wooden Marimba
+        const osc = this.ctx.createOscillator();
+        const buzz = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, playTime);
+
+        buzz.type = 'sawtooth';
+        buzz.frequency.setValueAtTime(freq * 3.01, playTime);
+
+        gain.gain.setValueAtTime(0.001, playTime);
+        gain.gain.linearRampToValueAtTime(0.9 * velocity, playTime + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + Math.min(0.6, durationSec + 0.1));
+
+        osc.connect(gain);
+        buzz.connect(gain);
+        gain.connect(destination);
+
+        osc.start(playTime);
+        buzz.start(playTime);
+
+        const stopTime = playTime + Math.min(0.65, durationSec + 0.15);
+        osc.stop(stopTime);
+        buzz.stop(stopTime);
+
+        return {
+          stop: () => {
+            try {
+              gain.gain.cancelScheduledValues(this.ctx!.currentTime);
+              gain.gain.linearRampToValueAtTime(0.001, this.ctx!.currentTime + 0.04);
+            } catch {}
+          },
+        };
+      }
+
       case 'synth':
       default: {
         // FIesta Subtractive Synth
@@ -998,6 +1385,17 @@ export class AudioEngine {
   public async decodeAudioData(data: ArrayBuffer): Promise<AudioBuffer> {
     await this.init();
     return await this.ctx!.decodeAudioData(data);
+  }
+
+  // --- FETCH & DECODE ONLINE SAMPLE FROM URL ---
+  public async loadSampleFromUrl(url: string): Promise<AudioBuffer> {
+    await this.init();
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to load online sample from ${url} (${response.statusText})`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return await this.decodeAudioData(arrayBuffer);
   }
 
   // Helper for generating white noise buffer
