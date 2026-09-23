@@ -1,0 +1,10 @@
+{
+  "name": "FIesta Studio - Browser Digital Audio Workstation",
+  "description": "Professional browser-based Digital Audio Workstation with multitrack sequencing, piano roll, synthesizers, sampler, effects rack, and AI co-producer.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

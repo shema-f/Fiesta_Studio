@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="fiestaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff3b69" />
+      <stop offset="50%" stop-color="#ff6b4a" />
+      <stop offset="100%" stop-color="#00f0a8" />
+    </linearGradient>
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background Badge -->
+  <rect width="100" height="100" rx="24" fill="#0d1015" />
+  <rect x="1" y="1" width="98" height="98" rx="23" stroke="#252d3a" stroke-width="2" />
+  
+  <!-- Original FIesta Stylized Tropical Audio Fruit Motif -->
+  <!-- Stem / Wave Leaf -->
+  <path d="M50 20 C52 14, 58 10, 68 12 C64 19, 57 22, 50 20 Z" fill="#00f0a8" filter="url(#neonGlow)"/>
+  <path d="M48 22 C48 16, 44 14, 38 15 C41 21, 46 22, 48 22 Z" fill="#10b981" />
+  
+  <!-- Main Fruit Body with Audio Waveform Carve -->
+  <path d="M50 24 C34 24, 20 36, 20 54 C20 72, 34 88, 50 88 C66 88, 80 72, 80 54 C80 36, 66 24, 50 24 Z" fill="url(#fiestaGrad)" opacity="0.95" />
+  
+  <!-- Soundwave equalizer cutouts inside the fruit -->
+  <rect x="34" y="46" width="4" height="16" rx="2" fill="#0d1015" />
+  <rect x="42" y="38" width="4" height="32" rx="2" fill="#0d1015" />
+  <rect x="50" y="32" width="4" height="44" rx="2" fill="#0d1015" />
+  <rect x="58" y="40" width="4" height="28" rx="2" fill="#0d1015" />
+  <rect x="66" y="48" width="4" height="12" rx="2" fill="#0d1015" />
+</svg>

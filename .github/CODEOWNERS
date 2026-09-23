@@ -1,0 +1,18 @@
+# Code Owners for FIesta Studio
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners
+* @ferrivox @fistonshema
+
+# Audio Engine & DSP core
+/src/audio/ @ferrivox @fistonshema
+
+# AI & Server endpoints
+/server.ts @ferrivox @fistonshema
+/src/components/AIAssistant.tsx @ferrivox @fistonshema
+
+# Documentation & Licensing
+/docs/ @ferrivox
+LICENSE @ferrivox
+NOTICE @ferrivox
+TRADEMARKS.md @ferrivox

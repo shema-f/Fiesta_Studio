@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "FIesta Studio - Digital Audio Workstation",
+  "short_name": "FIestaStudio",
+  "description": "Professional browser-based Digital Audio Workstation with multitrack sequencing, piano roll, synthesizers, sampler, and AI co-producer.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0b0d11",
+  "theme_color": "#0d0f12",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
