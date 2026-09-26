@@ -4,10 +4,10 @@
  * playback timeline, undo/redo history, and autosave.
  */
 
-import { Track, DrumChannel, Bus, Clip, Note, ViewMode, EffectPlugin, InstrumentType } from '../types/daw';
+import { Track, DrumChannel, Bus, Clip, Note, ViewMode, EffectPlugin, InstrumentType, Pattern } from '../types/daw';
 import { audioEngine, midiToNoteName } from '../audio/audioEngine';
 
-export type { Track, DrumChannel, Bus, Clip, Note, ViewMode, EffectPlugin, InstrumentType };
+export type { Track, DrumChannel, Bus, Clip, Note, ViewMode, EffectPlugin, InstrumentType, Pattern };
 
 export interface ProjectState {
   id: string;
@@ -25,14 +25,17 @@ export interface ProjectState {
   loopEndBar: number;
   current16thStep: number;
   metronome: boolean;
+  metronomeVolume?: number; // 0.0 to 1.0 (default 0.75)
   masterVolume: number;
 
   tracks: Track[];
   buses: Bus[];
   drumChannels: DrumChannel[];
+  patterns?: Pattern[];
+  activePatternId?: string;
   activeTrackId: string | null;
   activeClipId: string | null;
-  activePatternStepCount: 16 | 32 | 64;
+  activePatternStepCount: number; // 16, 32, 64, up to 512 steps
 
   viewMode: ViewMode;
   bottomPanelOpen: boolean;
@@ -399,6 +402,8 @@ export function getInitialProjectState(): ProjectState {
       if (parsed && parsed.tracks && parsed.drumChannels) {
         return {
           ...parsed,
+          metronome: parsed.metronome ?? false,
+          metronomeVolume: typeof parsed.metronomeVolume === 'number' ? parsed.metronomeVolume : 0.75,
           isPlaying: false,
           isRecording: false,
           playheadBar: 1,
@@ -430,11 +435,44 @@ export function getInitialProjectState(): ProjectState {
     loopEndBar: 9,
     current16thStep: 0,
     metronome: false,
+    metronomeVolume: 0.75,
     masterVolume: 1.0,
 
     tracks: INITIAL_TRACKS,
     buses: INITIAL_BUSES,
     drumChannels: DEFAULT_DRUM_CHANNELS,
+    patterns: [
+      {
+        id: 'pattern_1',
+        name: 'Pattern 1',
+        color: '#00f0a8',
+        lengthSteps: 16,
+        drumChannels: DEFAULT_DRUM_CHANNELS,
+      },
+      {
+        id: 'pattern_2',
+        name: 'Pattern 2 (Percussion Roll)',
+        color: '#ff3b69',
+        lengthSteps: 16,
+        drumChannels: DEFAULT_DRUM_CHANNELS.map((c) => ({
+          ...c,
+          steps: Array(16).fill(false),
+          velocities: Array(16).fill(0.85),
+        })),
+      },
+      {
+        id: 'pattern_3',
+        name: 'Pattern 3 (Amapiano Log Groove)',
+        color: '#f59e0b',
+        lengthSteps: 16,
+        drumChannels: DEFAULT_DRUM_CHANNELS.map((c) => ({
+          ...c,
+          steps: c.type.includes('log') || c.type === 'kick' ? [...c.steps] : Array(16).fill(false),
+          velocities: [...c.velocities],
+        })),
+      },
+    ],
+    activePatternId: 'pattern_1',
     activeTrackId: 'track_piano',
     activeClipId: 'clip_piano_1',
     activePatternStepCount: 16,

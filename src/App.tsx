@@ -211,10 +211,21 @@ export function App() {
         if (hasAnySolo && !track.solo) continue;
 
         for (const clip of track.clips) {
-          if (clip.notes && clip.notes.length > 0) {
-            const clipStartStep = (clip.startBar - 1) * 16;
-            const clipEndStep = clipStartStep + clip.lengthBars * 16;
+          const clipStartStep = Math.round((clip.startBar - 1) * 16);
+          const clipEndStep = clipStartStep + Math.round(clip.lengthBars * 16);
 
+          // Audio clip buffer playback at start step
+          if (clip.type === 'audio' && clip.audioBuffer && step === clipStartStep) {
+            audioEngine.playAudioBuffer(
+              clip.audioBuffer,
+              time,
+              track.busId || 'bus_vocals',
+              (clip.volume ?? 1.0) * (track.volume ?? 1.0)
+            );
+          }
+
+          // MIDI / Instrument note playback
+          if (clip.notes && clip.notes.length > 0) {
             if (step >= clipStartStep && step < clipEndStep) {
               const relativeStep = step - clipStartStep;
               const activeNotes = clip.notes.filter((n) => n.startStep === relativeStep);
@@ -223,7 +234,7 @@ export function App() {
                 audioEngine.playInstrumentNote(
                   track.instrumentType || 'piano',
                   note.midi,
-                  note.velocity || 0.85,
+                  (note.velocity || 0.85) * (track.volume ?? 1.0),
                   durationSec,
                   time,
                   track.busId || 'bus_instruments'
@@ -245,6 +256,18 @@ export function App() {
     return () => unbind();
   }, [updateProjectQuiet]);
 
+  // Synchronize metronome and swing settings with audio engine
+  useEffect(() => {
+    audioEngine.setMetronome(project.metronome);
+    if (typeof project.metronomeVolume === 'number') {
+      audioEngine.setMetronomeVolume(project.metronomeVolume);
+    }
+  }, [project.metronome, project.metronomeVolume]);
+
+  useEffect(() => {
+    audioEngine.setSwing(project.swing || 0);
+  }, [project.swing]);
+
   // Play / Pause toggle
   const handleTogglePlay = async () => {
     await audioEngine.init();
@@ -255,6 +278,10 @@ export function App() {
       const startStep = Math.max(0, Math.floor((project.playheadBar - 1) * 16));
       audioEngine.setBpm(project.bpm);
       audioEngine.setSwing(project.swing);
+      audioEngine.setMetronome(project.metronome);
+      if (typeof project.metronomeVolume === 'number') {
+        audioEngine.setMetronomeVolume(project.metronomeVolume);
+      }
       audioEngine.startPlayback(startStep);
       updateProjectQuiet((p) => ({ ...p, isPlaying: true }));
     }

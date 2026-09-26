@@ -92,6 +92,7 @@ export class AudioEngine {
 
   // Metronome node
   private metronomeEnabled = false;
+  private metronomeVolume = 0.75;
 
   // CPU / Latency monitoring
   public lastLatencyMs = 0;
@@ -253,8 +254,47 @@ export class AudioEngine {
     this.swing = Math.max(0, Math.min(0.75, swingAmount));
   }
 
+  public getSwing(): number {
+    return this.swing;
+  }
+
   public setMetronome(enabled: boolean): void {
     this.metronomeEnabled = enabled;
+  }
+
+  public isMetronomeEnabled(): boolean {
+    return this.metronomeEnabled;
+  }
+
+  public setMetronomeVolume(volume: number): void {
+    this.metronomeVolume = Math.max(0, Math.min(1.0, volume));
+  }
+
+  public getMetronomeVolume(): number {
+    return this.metronomeVolume;
+  }
+
+  /**
+   * Play an instant preview tick for auditioning volume changes
+   */
+  public playMetronomeAudition(): void {
+    if (!this.ctx) {
+      this.init().then(() => {
+        if (this.ctx) {
+          this.playMetronomeTick(this.ctx.currentTime + 0.01, true);
+        }
+      }).catch(console.error);
+      return;
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume().then(() => {
+        if (this.ctx) {
+          this.playMetronomeTick(this.ctx.currentTime + 0.01, true);
+        }
+      }).catch(console.error);
+      return;
+    }
+    this.playMetronomeTick(this.ctx.currentTime + 0.01, true);
   }
 
   public onStep(callback: (step: number, time: number) => void): () => void {
@@ -280,19 +320,27 @@ export class AudioEngine {
     // 16th note duration = (60 / bpm) / 4 seconds
     const secondsPer16th = 60.0 / this.bpm / 4.0;
 
-    // Apply swing on odd steps (16th notes 1, 3, 5...)
-    let swingOffset = 0;
-    if (this.currentStep % 2 === 1) {
-      swingOffset = secondsPer16th * (this.swing * 0.5);
+    // Apply authentic swing:
+    // Even step (0, 2, 4...) duration is lengthened by (swing * 0.6)
+    // Odd step (1, 3, 5...) duration is shortened by (swing * 0.6)
+    // This delays odd 16th notes while maintaining strict 8th-note downbeats
+    let stepDuration = secondsPer16th;
+    if (this.swing > 0.001) {
+      const swingDelay = secondsPer16th * (this.swing * 0.6);
+      if (this.currentStep % 2 === 0) {
+        stepDuration = secondsPer16th + swingDelay;
+      } else {
+        stepDuration = secondsPer16th - swingDelay;
+      }
     }
 
-    this.nextStepTime += secondsPer16th + swingOffset;
+    this.nextStepTime += stepDuration;
     this.currentStep++;
   }
 
   private scheduleStep(step: number, time: number): void {
-    // Trigger metronome if enabled
-    if (this.metronomeEnabled && this.ctx) {
+    // Trigger metronome on every beat if enabled
+    if (this.metronomeEnabled && this.ctx && this.metronomeVolume > 0.001) {
       const beatInBar = Math.floor((step % 16) / 4);
       const isFirst16thOfBeat = step % 4 === 0;
       if (isFirst16thOfBeat) {
@@ -306,22 +354,28 @@ export class AudioEngine {
     }
   }
 
-  private playMetronomeTick(time: number, isAccent: boolean): void {
-    if (!this.ctx || !this.masterGain) return;
+  public playMetronomeTick(time: number, isAccent: boolean): void {
+    if (!this.ctx || !this.masterGain || this.metronomeVolume <= 0.001) return;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(isAccent ? 1600 : 900, time);
+    // Triangle waveform gives crisp high-mid clarity cutting cleanly through mixes
+    osc.type = 'triangle';
+    const startFreq = isAccent ? 2200 : 1200;
+    const endFreq = isAccent ? 1000 : 600;
 
-    gain.gain.setValueAtTime(isAccent ? 0.35 : 0.18, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+    osc.frequency.setValueAtTime(startFreq, time);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, time + 0.025);
+
+    const peakGain = (isAccent ? 0.48 : 0.28) * this.metronomeVolume;
+    gain.gain.setValueAtTime(peakGain, time);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.035);
 
     osc.connect(gain);
     gain.connect(this.masterGain);
 
     osc.start(time);
-    osc.stop(time + 0.05);
+    osc.stop(time + 0.04);
   }
 
   // --- VIRTUAL SYNTHESIZERS & DRUM DSP VOICES ---

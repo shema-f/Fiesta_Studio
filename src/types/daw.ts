@@ -22,7 +22,11 @@ export type DawTheme =
   | 'fruit-punch'
   | 'kigali-gold'
   | 'cyber-neon'
-  | 'high-contrast';
+  | 'high-contrast'
+  | 'vaporwave'
+  | 'synthwave-retro'
+  | 'arctic-ice'
+  | 'toxic-green';
 
 export type EffectType =
   | 'eq'
@@ -64,6 +68,10 @@ export interface DrumChannel {
   mixerTrack?: number; // 1, 2, 3... or 0 for master
   customSampleUrl?: string;
   audioBuffer?: AudioBuffer;
+  color?: string;
+  group?: string;
+  stepPitches?: number[];
+  stepPans?: number[];
 }
 
 export type ClipType = 'pattern' | 'audio' | 'midi';
@@ -123,7 +131,8 @@ export interface Bus {
 export interface Pattern {
   id: string;
   name: string;
-  lengthSteps: number; // 16, 32, 64
+  color?: string;
+  lengthSteps: number; // 16, 32, 64, up to 512
   drumChannels?: DrumChannel[];
 }
 
