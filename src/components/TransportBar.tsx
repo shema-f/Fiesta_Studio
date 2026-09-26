@@ -27,6 +27,7 @@ import {
   Activity,
   Cpu,
   Shuffle,
+  HelpCircle,
 } from 'lucide-react';
 import { ProjectState } from '../engine/projectStore';
 import { audioEngine } from '../audio/audioEngine';
@@ -65,6 +66,7 @@ interface TransportBarProps {
   onOpenExport: () => void;
   onOpenCommandPalette: () => void;
   onOpenSplash?: () => void;
+  onOpenChangelog?: () => void;
 }
 
 export const TransportBar: React.FC<TransportBarProps> = ({
@@ -79,6 +81,7 @@ export const TransportBar: React.FC<TransportBarProps> = ({
   onOpenExport,
   onOpenCommandPalette,
   onOpenSplash,
+  onOpenChangelog,
 }) => {
   const [isEditingBpm, setIsEditingBpm] = useState(false);
   const [bpmInput, setBpmInput] = useState(project.bpm.toString());
@@ -658,6 +661,21 @@ export const TransportBar: React.FC<TransportBarProps> = ({
             ⌘K
           </kbd>
         </button>
+
+        {/* Changelog & Help (v0.2.0) */}
+        {onOpenChangelog && (
+          <button
+            onClick={onOpenChangelog}
+            title="FIesta Studio Changelog & Quick Help (v0.2.0)"
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-[#131720] hover:bg-[#1b2230] text-[#8e9eb5] hover:text-white rounded-lg border border-[#222936] text-xs transition-colors group cursor-pointer"
+          >
+            <Sparkles size={13} className="text-[#00f0a8] group-hover:rotate-12 transition-transform" />
+            <span className="hidden lg:inline text-[11px] font-semibold">What's New</span>
+            <span className="text-[9px] bg-[#00f0a8]/15 text-[#00f0a8] font-mono-daw px-1 py-0.2 rounded font-bold border border-[#00f0a8]/30">
+              v0.2.0
+            </span>
+          </button>
+        )}
 
         {/* FIesta AI Co-Producer Button */}
         <button

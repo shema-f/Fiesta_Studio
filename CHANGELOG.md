@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-09-26
+
+### Added
+- **"Create New Track" Modal & Track Provisioning Engine:**
+  - Added dedicated **"Create New Track"** trigger button across arrangement header, toolbar, and track list footer.
+  - Interactive track configuration dialog featuring two dedicated track modes:
+    - **Instrument Track**: Hardcoded built-in generators and synthesizers (Sytrus FM, 3xOsc Synth, African Inanga Pluck, Amapiano Log Drum, Amayugi Shaker, Intore Royal Drums, Grand Piano, Clean Electric Bass, Rhodes EP), FL-inspired color palette, custom naming, and direct MIDI clip initialization.
+    - **Audio Track**: Audio timeline channel setup with microphone input routing, sample playback configuration, and color tags.
+  - Automatic state appending to `project.tracks` and seamless focus synchronization to `activeTrackId`.
+- **Fruity Loops Pattern Management System:**
+  - Dedicated **Pattern Control Bar** in the Channel Rack (`ChannelRack.tsx`).
+  - Active pattern selector dropdown displaying pattern name, index (`Pattern 1`, `Pattern 2`, etc.), and active step counts.
+  - **`+ New Pattern` Creation**: Creates new independent pattern layers with distinct color coding and appends them to `project.patterns`.
+  - **Pattern Cloning**: Clones all drum channel steps, velocities, and pitches from active patterns to new iterations.
+  - **Timeline Pattern Stamping**: Directly places and stamps active patterns into the multitrack arrangement timeline as pattern clips.
+  - Pattern state synchronization: Channel rack step edits persist seamlessly to the currently selected pattern.
+- **Dynamic Groove & Swing Quantization:**
+  - Swing percentage slider integrated into both `TransportBar` and `ChannelRack`.
+  - True shuffle delay on odd 16th steps wired directly to Web Audio scheduler via `audioEngine.setSwing()`.
+- **Enhanced Channel Rack & Sound Controls:**
+  - High-precision rotary knobs (`FruityKnob`) for Pan and Volume with detents and numeric value tooltips.
+  - Authentic green LED mute/solo indicator lamps.
+  - Mixer track routing with LCD readout and auto-route assignment.
+  - Per-step graph editor with velocity, pitch, pan, and filter cutoff modulation.
+  - PC VST generator and sample hub with Sytrus FM, 3xOsc, Harmless, and custom audio file import.
+
 ## [0.1.0] - 2026-09-23
 
 ### Added

@@ -17,6 +17,7 @@ import {
   Layers,
   Wand2,
   X,
+  HelpCircle,
 } from 'lucide-react';
 import { ProjectState } from '../engine/projectStore';
 import { ViewMode } from '../types/daw';
@@ -30,6 +31,7 @@ interface CommandPaletteProps {
   onStop: () => void;
   onSave: () => void;
   onOpenExport: () => void;
+  onOpenChangelog?: () => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -41,6 +43,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onStop,
   onSave,
   onOpenExport,
+  onOpenChangelog,
 }) => {
   const [query, setQuery] = useState('');
 
@@ -164,6 +167,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       action: () => {
         onClose();
         onOpenExport();
+      },
+    },
+    {
+      id: 'changelog',
+      title: 'View Changelog & Recent Contributions (v0.2.0)',
+      category: 'Help',
+      shortcut: '⌘L',
+      icon: <Sparkles size={14} className="text-[#00f0a8]" />,
+      action: () => {
+        onClose();
+        if (onOpenChangelog) onOpenChangelog();
+      },
+    },
+    {
+      id: 'keyboard_help',
+      title: 'Keyboard Shortcuts & Quick Start Guide',
+      category: 'Help',
+      shortcut: '?',
+      icon: <HelpCircle size={14} className="text-[#ff3b69]" />,
+      action: () => {
+        onClose();
+        if (onOpenChangelog) onOpenChangelog();
       },
     },
   ];

@@ -35,6 +35,7 @@ import { SampleHubView } from './samples/SampleHubView';
 import { AIAssistant } from './components/AIAssistant';
 import { ExportModal } from './components/ExportModal';
 import { CommandPalette } from './components/CommandPalette';
+import { Changelog } from './components/Changelog';
 import { AppleLogo } from './components/AppleLogo';
 import { AppleLoadingSplash } from './components/AppleLoadingSplash';
 import { DawTheme } from './types/daw';
@@ -43,6 +44,7 @@ export function App() {
   const [project, setProject] = useState<ProjectState>(getInitialProjectState);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSplashOpen, setIsSplashOpen] = useState(true);
   const [currentTheme, setCurrentTheme] = useState<DawTheme>(() => {
@@ -405,6 +407,7 @@ export function App() {
         onOpenExport={() => setIsExportOpen(true)}
         onOpenCommandPalette={() => setIsPaletteOpen(true)}
         onOpenSplash={() => setIsSplashOpen(true)}
+        onOpenChangelog={() => setIsChangelogOpen(true)}
       />
 
       {/* 2. MAIN WORKSPACE VIEW (Timeline, Sequencer, Piano Roll, Mixer, Instruments, Effects, Samples, AI) */}
@@ -565,18 +568,46 @@ export function App() {
           </button>
         </div>
 
-        {/* System & Audio Engine Status */}
-        <div className="hidden md:flex items-center space-x-3 text-[10px] font-mono-daw text-[#4b586e]">
-          <span className="flex items-center space-x-1">
-            <Cpu size={11} className="text-[#00f0a8]" />
-            <span>CPU 2%</span>
-          </span>
-          <span>•</span>
-          <span>44.1 kHz</span>
-          <span>•</span>
-          <span>32-BIT DSP</span>
-          <span>•</span>
-          <span className="text-[#00f0a8]">LATENCY 4.8ms</span>
+        {/* Right Dock Controls: Help, Changelog Link & System Status */}
+        <div className="flex items-center space-x-2 shrink-0">
+          {/* Help & Shortcuts Guide */}
+          <button
+            onClick={() => setIsChangelogOpen(true)}
+            title="DAW Quick Help & Keyboard Shortcuts"
+            className="flex items-center space-x-1 px-2 py-1 rounded bg-[#131924] hover:bg-[#1c2433] text-[#7d90a6] hover:text-white border border-[#222c3d] text-[11px] font-semibold transition-colors cursor-pointer"
+          >
+            <HelpCircle size={12} className="text-[#ff3b69]" />
+            <span className="hidden sm:inline">Help</span>
+          </button>
+
+          {/* Changelog & Recent Contributions Link */}
+          <button
+            onClick={() => setIsChangelogOpen(true)}
+            title="View recent contributions, updates & changelog (v0.2.0)"
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-[#141b26] hover:bg-[#1d2737] text-[#c5d4e7] hover:text-white border border-[#263345] hover:border-[#00f0a8]/60 text-[11px] font-semibold transition-all group cursor-pointer shadow-xs"
+          >
+            <Sparkles size={12} className="text-[#00f0a8] group-hover:rotate-12 transition-transform" />
+            <span className="hidden sm:inline font-bold">Changelog</span>
+            <span className="text-[9px] bg-[#00f0a8]/15 text-[#00f0a8] font-mono-daw px-1.5 py-0.2 rounded font-bold border border-[#00f0a8]/30">
+              v0.2.0
+            </span>
+          </button>
+
+          <div className="hidden lg:block w-[1px] h-3.5 bg-[#1d2635]" />
+
+          {/* System & Audio Engine Status */}
+          <div className="hidden md:flex items-center space-x-2.5 text-[10px] font-mono-daw text-[#4b586e]">
+            <span className="flex items-center space-x-1">
+              <Cpu size={11} className="text-[#00f0a8]" />
+              <span>CPU 2%</span>
+            </span>
+            <span>•</span>
+            <span>44.1 kHz</span>
+            <span>•</span>
+            <span>32-BIT DSP</span>
+            <span>•</span>
+            <span className="text-[#00f0a8]">LATENCY 4.8ms</span>
+          </div>
         </div>
       </footer>
 
@@ -605,6 +636,7 @@ export function App() {
         onStop={handleStop}
         onSave={handleSave}
         onOpenExport={() => setIsExportOpen(true)}
+        onOpenChangelog={() => setIsChangelogOpen(true)}
       />
 
       {/* Apple Loading & Startup Splash Screen */}
@@ -612,6 +644,13 @@ export function App() {
         isOpen={isSplashOpen}
         onClose={() => setIsSplashOpen(false)}
         isInitialLoad={true}
+      />
+
+      {/* Changelog & Contributions Modal */}
+      <Changelog
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
+        onNavigateView={(view) => updateProjectQuiet((p) => ({ ...p, viewMode: view }))}
       />
     </div>
   );
